@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { QRCodeCanvas } from "qrcode.react"; // Import the named export
+import State from "../Components/State";
 
 const QRCode = () => {
   const [qrCode, setQrCode] = useState(null);
@@ -27,7 +28,7 @@ const QRCode = () => {
 
   return (
     <div>
-      <h1>Scan QR Code</h1>
+      {/* <h1>Scan QR Code</h1>
       {qrCode ? (
         <QRCodeCanvas value={qrCode} size={256} />
       ) : (
@@ -35,6 +36,8 @@ const QRCode = () => {
       )}
 
       <a href="/setup">setup</a>
+      <br /> */}
+      <State />
     </div>
   );
 };
