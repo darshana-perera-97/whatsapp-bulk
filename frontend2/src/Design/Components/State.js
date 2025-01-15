@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import QRCodeView from "./QRCodeView";
+import { Button } from "react-bootstrap";
 
 const State = () => {
   const [connected, setConnected] = useState(false);
@@ -28,7 +30,7 @@ const State = () => {
 
   return (
     <div style={{ textAlign: "center", marginTop: "50px" }}>
-      <h2>WhatsApp Connection Status</h2>
+      {/* <h2>WhatsApp Connection Status</h2> */}
       {connected ? (
         <p style={{ color: "green", fontWeight: "bold" }}>Connected ✅</p>
       ) : (
@@ -36,6 +38,13 @@ const State = () => {
           <p style={{ color: "red", fontWeight: "bold" }}>Not Connected ❌</p>
           <QRCodeView />
         </div>
+      )}
+      {connected && (
+        <Link to="/setup">
+          <Button variant="primary" size="lg" className="mt-3">
+            Start Campaign
+          </Button>
+        </Link>
       )}
     </div>
   );

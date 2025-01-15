@@ -6,7 +6,7 @@ import WhatsAppWindow from "../Layouts/WhatsAppWindow";
 export default function Setup() {
   return (
     <div>
-      <State />
+      {/* <State /> */}
       <Counter />
       <SingleMessage />
       {/* <WhatsAppWindow /> */}

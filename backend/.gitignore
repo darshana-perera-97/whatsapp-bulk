@@ -4,6 +4,7 @@
 /node_modules
 /.wwebjs_auth
 /.wwebjs_cache
+/uploads
 /.pnp
 .pnp.js
 

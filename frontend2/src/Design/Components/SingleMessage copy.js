@@ -60,38 +60,40 @@ const SingleMessage = () => {
         setResponse({ error: "An error occurred while sending the message" });
       }
     }
-     if (activeTab === "bulk") {
-       if (!bulkFile || (!message && !image)) {
-         setResponse({
-           error: "CSV file and either message or image are required",
-         });
-         return;
-       }
+    if (activeTab === "bulk") {
+      if (!bulkFile) {
+        setResponse({ error: "CSV file is required for bulk messages" });
+        return;
+      }
 
-       const formData = new FormData();
-       formData.append("file", bulkFile);
-       formData.append("message", message);
-       if (image) {
-         formData.append("image", JSON.stringify(image));
-       }
+      const formData = new FormData();
+      formData.append("file", bulkFile);
+      formData.append("message", message);
+      if (image) {
+        formData.append("image", image); // Append the image if it exists
+      }
 
-       try {
-         const res = await fetch("http://localhost:3001/api/bulk", {
-           method: "POST",
-           body: formData,
-         });
+      try {
+        const res = await fetch("http://localhost:3001/api/bulk", {
+          method: "POST",
+          body: formData,
+        });
 
-         const data = await res.json();
-         if (res.ok) {
-           setResponse(data);
-         } else {
-           setResponse({ error: data.error || "An error occurred" });
-         }
-       } catch (err) {
-         console.error("Fetch error:", err);
-         setResponse({ error: "An error occurred while sending the messages" });
-       }
-     }
+        const data = await res.json();
+        if (res.ok) {
+          setResponse({
+            message: `${data.message}. Total numbers: ${data.totalNumbers}`,
+          });
+        } else {
+          setResponse({ error: data.error || "An error occurred" });
+        }
+      } catch (err) {
+        console.error("Fetch error:", err);
+        setResponse({
+          error: "An error occurred while processing the CSV file",
+        });
+      }
+    }
   };
 
   return (

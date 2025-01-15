@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import {
   Container,
   Row,
@@ -38,9 +39,11 @@ const SaaSLandingPage = () => {
             The best SaaS platform to manage your tasks efficiently and grow
             your business.
           </p>
-          <Button variant="primary" size="lg" className="mt-3">
-            Start Free Trial
-          </Button>
+          <Link to="/qr">
+            <Button variant="primary" size="lg" className="mt-3">
+              Start Free Trial
+            </Button>
+          </Link>
         </Container>
       </div>
 
