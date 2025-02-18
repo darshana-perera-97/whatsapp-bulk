@@ -112,13 +112,7 @@ app.get("/api/counter", (req, res) => {
   }
 });
 
-const upload = multer({
-  dest: "uploads/", // Directory to save uploaded files
-  limits: { fileSize: 5 * 1024 * 1024 }, // Limit to 5MB
-});
 
-app.post("/api/bulkMessage", upload.single("file"), async (req, res) => {
-  try {
     const { message } = req.body;
     const file = req.file; // Uploaded CSV file
 
@@ -183,19 +177,60 @@ app.post("/api/bulkMessage", upload.single("file"), async (req, res) => {
             }
           } catch (err) {
             console.error(`Failed to send message to ${phone}:`, err);
-          }
+=======
+    if (!req.file) {
+      console.log("❌ No file uploaded");
+      return res.status(400).json({ error: "CSV file is required" });
+    }
+
+    const message = req.body.message;
+    const image = req.body.image ? JSON.parse(req.body.image) : null;
+    const filePath = req.file.path;
+    const phoneNumbers = [];
+
+    console.log("📂 Processing CSV File:", req.file.originalname);
+
+    // **📌 Fix: Explicitly Define Headers**
+    fs.createReadStream(filePath)
+      .pipe(csv({ headers: true, skipLines: 0, trim: true }))
+      .on("data", (row) => {
+        console.log("📊 Row Data:", row);
+
+        // **Fix column issue by checking possible variations**
+        const phone =
+          row.phoneNumber || row["phoneNumber"] || row["_0"]?.trim();
+
+        if (phone && /^\d+$/.test(phone)) {
+          phoneNumbers.push(phone);
+        }
+      })
+      .on("end", async () => {
+        fs.unlinkSync(filePath); // Cleanup temp file
+
+        if (phoneNumbers.length === 0) {
+          console.log("❌ No valid phone numbers found!");
+          return res
+            .status(400)
+            .json({ error: "No valid phone numbers found in CSV" });
         }
 
-        res.json({
-          message: "Bulk messages sent successfully!",
-          phoneNumbers: numbersArray,
-        });
-      });
-  } catch (err) {
-    console.error("Error processing bulk message:", err);
-    res
-      .status(500)
-      .json({ error: "An error occurred while processing your request" });
+        console.log("✅ Extracted Phone Numbers:", phoneNumbers);
+
+        // **📲 Send Messages**
+        for (const phone of phoneNumbers) {
+          const formattedPhone = `${phone}@c.us`;
+          if (image) {
+            const media = new MessageMedia(
+              image.mimetype,
+              image.data,
+              image.filename
+            );
+            await client.sendMessage(formattedPhone, media, {
+              caption: message,
+            });
+          } else {
+            await client.sendMessage(formattedPhone, message);
+
   }
 });
 
