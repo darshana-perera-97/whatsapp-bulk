@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import config from "../config"; // Import the config file
 
 const SingleMessage = () => {
   const [activeTab, setActiveTab] = useState("single");
@@ -41,7 +42,7 @@ const SingleMessage = () => {
         return;
       }
       try {
-        const res = await fetch("http://localhost:3001/api/sendSingleMsg", {
+        const res = await fetch(`${config.BACKEND_URL}/api/sendSingleMsg`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -74,7 +75,7 @@ const SingleMessage = () => {
       }
 
       try {
-        const res = await fetch("http://localhost:3001/api/bulk", {
+        const res = await fetch(`${config.BACKEND_URL}/api/bulk`, {
           method: "POST",
           body: formData,
         });

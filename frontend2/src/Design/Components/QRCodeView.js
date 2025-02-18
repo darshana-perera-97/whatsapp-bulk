@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { QRCodeCanvas } from "qrcode.react";
+import config from "../config"; // Import the config file
 
 const QRCodeView = () => {
   const [qrCode, setQrCode] = useState(null);
@@ -7,7 +8,7 @@ const QRCodeView = () => {
   useEffect(() => {
     const fetchQrCode = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/qrcode");
+        const response = await fetch(`${config.BACKEND_URL}/api/qrcode`);
         if (response.ok) {
           const data = await response.json();
           setQrCode(data.qrCode);

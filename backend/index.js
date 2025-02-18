@@ -9,7 +9,7 @@ const multer = require("multer"); // For file uploads
 const csvParser = require("csv-parser"); // For parsing CSV files
 
 const app = express();
-const PORT = 3001;
+const PORT = 5007;
 app.use(cors());
 
 let qrCodeData = null;
@@ -112,14 +112,72 @@ app.get("/api/counter", (req, res) => {
   }
 });
 
-// **🚀 Multer Setup for File Uploads**
-const upload = multer({
-  dest: "uploads/",
-  limits: { fileSize: 5 * 1024 * 1024 },
-});
 
-app.post("/api/bulk", upload.single("file"), async (req, res) => {
-  try {
+    const { message } = req.body;
+    const file = req.file; // Uploaded CSV file
+
+    let image = null;
+    if (req.body.image) {
+      image = JSON.parse(req.body.image);
+    }
+
+    if (!file || (!message && !image)) {
+      return res
+        .status(400)
+        .json({ error: "CSV file and either message or image are required" });
+    }
+
+    // Read and parse the uploaded CSV file
+    const filePath = path.join(__dirname, file.path);
+    console.log("CSV File saved at:", filePath);
+
+    const numbersArray = [];
+
+    fs.createReadStream(filePath)
+      .pipe(csvParser())
+      .on("data", (row) => {
+        // Dynamically find the column containing phone numbers
+        const phoneKey = Object.keys(row).find((key) =>
+          key.toLowerCase().includes("phone")
+        );
+
+        if (!phoneKey || !row[phoneKey]) {
+          console.error("Invalid CSV row, missing phone number:", row);
+          return;
+        }
+
+        const phoneNumber = row[phoneKey].toString().trim();
+        if (phoneNumber) numbersArray.push(phoneNumber);
+      })
+      .on("end", async () => {
+        if (numbersArray.length === 0) {
+          return res
+            .status(400)
+            .json({ error: "No valid phone numbers found in CSV file" });
+        }
+
+        console.log("Extracted phone numbers:", numbersArray);
+
+        // Send messages via WhatsApp
+        for (const phone of numbersArray) {
+          const formattedNumber = `${phone}@c.us`;
+
+          try {
+            if (image) {
+              const media = new MessageMedia(
+                image.mimetype,
+                image.data,
+                image.filename
+              );
+              await client.sendMessage(formattedNumber, media, {
+                caption: message,
+              });
+            } else {
+              await client.sendMessage(formattedNumber, message);
+            }
+          } catch (err) {
+            console.error(`Failed to send message to ${phone}:`, err);
+=======
     if (!req.file) {
       console.log("❌ No file uploaded");
       return res.status(400).json({ error: "CSV file is required" });
@@ -172,16 +230,7 @@ app.post("/api/bulk", upload.single("file"), async (req, res) => {
             });
           } else {
             await client.sendMessage(formattedPhone, message);
-          }
-        }
 
-        res.json({
-          message: `Messages sent to ${phoneNumbers.length} contacts`,
-        });
-      });
-  } catch (error) {
-    console.error("🚨 Error processing bulk messages:", error);
-    res.status(500).json({ error: "Internal server error" });
   }
 });
 

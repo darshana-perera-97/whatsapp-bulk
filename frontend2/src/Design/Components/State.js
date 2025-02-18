@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import QRCodeView from "./QRCodeView";
 import { Button } from "react-bootstrap";
+import config from "../config"; // Import the config file
 
 const State = () => {
   const [connected, setConnected] = useState(false);
@@ -9,7 +10,7 @@ const State = () => {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/status");
+        const response = await fetch(`${config.BACKEND_URL}/api/status`);
         if (response.ok) {
           const data = await response.json();
           setConnected(data.connected);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { QRCodeCanvas } from "qrcode.react"; // Import the named export
 import State from "../Components/State";
+import config from "../config"; // Import the config file
 
 const QRCode = () => {
   const [qrCode, setQrCode] = useState(null);
@@ -9,7 +10,7 @@ const QRCode = () => {
     // Fetch the QR code from the backend
     const fetchQrCode = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/qrcode");
+        const response = await fetch(`${config.BACKEND_URL}/api/qrcode`);
         const data = await response.json();
         if (data.qrCode) {
           setQrCode(data.qrCode);

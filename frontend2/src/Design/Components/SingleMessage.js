@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import BulkMessageUploader from "../Pages/BulkMessageUploader";
+import config from "../config"; // Import the config file
 
 const SingleMessage = () => {
   const [activeTab, setActiveTab] = useState("single");
@@ -41,7 +43,7 @@ const SingleMessage = () => {
         return;
       }
       try {
-        const res = await fetch("http://localhost:3001/api/sendSingleMsg", {
+        const res = await fetch(`${config.BACKEND_URL}/api/sendSingleMsg`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -60,38 +62,38 @@ const SingleMessage = () => {
         setResponse({ error: "An error occurred while sending the message" });
       }
     }
-     if (activeTab === "bulk") {
-       if (!bulkFile || (!message && !image)) {
-         setResponse({
-           error: "CSV file and either message or image are required",
-         });
-         return;
-       }
+    if (activeTab === "bulk") {
+      if (!bulkFile || (!message && !image)) {
+        setResponse({
+          error: "CSV file and either message or image are required",
+        });
+        return;
+      }
 
-       const formData = new FormData();
-       formData.append("file", bulkFile);
-       formData.append("message", message);
-       if (image) {
-         formData.append("image", JSON.stringify(image));
-       }
+      const formData = new FormData();
+      formData.append("file", bulkFile);
+      formData.append("message", message);
+      if (image) {
+        formData.append("image", JSON.stringify(image));
+      }
 
-       try {
-         const res = await fetch("http://localhost:3001/api/bulk", {
-           method: "POST",
-           body: formData,
-         });
+      try {
+        const res = await fetch(`${config.BACKEND_URL}/api/bulk`, {
+          method: "POST",
+          body: formData,
+        });
 
-         const data = await res.json();
-         if (res.ok) {
-           setResponse(data);
-         } else {
-           setResponse({ error: data.error || "An error occurred" });
-         }
-       } catch (err) {
-         console.error("Fetch error:", err);
-         setResponse({ error: "An error occurred while sending the messages" });
-       }
-     }
+        const data = await res.json();
+        if (res.ok) {
+          setResponse(data);
+        } else {
+          setResponse({ error: data.error || "An error occurred" });
+        }
+      } catch (err) {
+        console.error("Fetch error:", err);
+        setResponse({ error: "An error occurred while sending the messages" });
+      }
+    }
   };
 
   return (
@@ -219,95 +221,98 @@ const SingleMessage = () => {
         )}
 
         {activeTab === "bulk" && (
-          <div className="tab-pane active">
-            <div className="card">
-              <div className="row">
-                <div className="col-md-7">
-                  <div className="card-body">
-                    <form onSubmit={handleSubmit}>
-                      <div className="mb-3">
-                        <label
-                          htmlFor="bulkFile"
-                          className="form-label fw-bold"
-                        >
-                          Upload CSV File:
-                        </label>
-                        <input
-                          type="file"
-                          className="form-control"
-                          id="bulkFile"
-                          accept=".csv"
-                          onChange={handleBulkFileChange}
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label htmlFor="message" className="form-label fw-bold">
-                          Message:
-                        </label>
-                        <textarea
-                          className="form-control"
-                          id="message"
-                          value={message}
-                          onChange={(e) => setMessage(e.target.value)}
-                          placeholder="Enter your message"
-                          rows="4"
-                        ></textarea>
-                        <div className="mb-3">
-                          <label htmlFor="image" className="form-label fw-bold">
-                            Image (optional):
-                          </label>
-                          <input
-                            type="file"
-                            className="form-control"
-                            id="image"
-                            accept="image/*"
-                            onChange={handleImageChange}
-                          />
-                        </div>
-                      </div>
-                      <button type="submit" className="btn btn-primary w-100">
-                        Send Bulk Messages
-                      </button>
-                    </form>
-                  </div>
-                </div>
-                <div className="col-md-1"></div>
+          // <div className="tab-pane active">
+          //   <div className="card">
+          //     <div className="row">
+          //       <div className="col-md-7">
+          //         <div className="card-body">
+          //           <form onSubmit={handleSubmit}>
+          //             <div className="mb-3">
+          //               <label
+          //                 htmlFor="bulkFile"
+          //                 className="form-label fw-bold"
+          //               >
+          //                 Upload CSV File:
+          //               </label>
+          //               <input
+          //                 type="file"
+          //                 className="form-control"
+          //                 id="bulkFile"
+          //                 accept=".csv"
+          //                 onChange={handleBulkFileChange}
+          //               />
+          //             </div>
+          //             <div className="mb-3">
+          //               <label htmlFor="message" className="form-label fw-bold">
+          //                 Message:
+          //               </label>
+          //               <textarea
+          //                 className="form-control"
+          //                 id="message"
+          //                 value={message}
+          //                 onChange={(e) => setMessage(e.target.value)}
+          //                 placeholder="Enter your message"
+          //                 rows="4"
+          //               ></textarea>
+          //               <div className="mb-3">
+          //                 <label htmlFor="image" className="form-label fw-bold">
+          //                   Image (optional):
+          //                 </label>
+          //                 <input
+          //                   type="file"
+          //                   className="form-control"
+          //                   id="image"
+          //                   accept="image/*"
+          //                   onChange={handleImageChange}
+          //                 />
+          //               </div>
+          //             </div>
+          //             <button type="submit" className="btn btn-primary w-100">
+          //               Send Bulk Messages
+          //             </button>
+          //           </form>
+          //         </div>
+          //       </div>
+          //       <div className="col-md-1"></div>
 
-                {/* Preview Section */}
-                <div className="col-md-4">
-                  <div className="card shadow">
-                    <div className="card-body ">
-                      <h5 className="card-title text-center">
-                        Message Preview
-                      </h5>
-                      {message || image ? (
-                        <div>
-                          <div className="whatsapp-message-preview">
-                            <div className="message-body">
-                              {image && (
-                                <img
-                                  src={`data:${image.mimetype};base64,${image.data}`}
-                                  alt="Image Message"
-                                  className="message-image"
-                                  style={{ maxWidth: "200px" }}
-                                />
-                              )}
-                              {message && (
-                                <p className="message-text">{message}</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-muted text-center">
-                          Enter details to see a preview.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          //       {/* Preview Section */}
+          //       <div className="col-md-4">
+          //         <div className="card shadow">
+          //           <div className="card-body ">
+          //             <h5 className="card-title text-center">
+          //               Message Preview
+          //             </h5>
+          //             {message || image ? (
+          //               <div>
+          //                 <div className="whatsapp-message-preview">
+          //                   <div className="message-body">
+          //                     {image && (
+          //                       <img
+          //                         src={`data:${image.mimetype};base64,${image.data}`}
+          //                         alt="Image Message"
+          //                         className="message-image"
+          //                         style={{ maxWidth: "200px" }}
+          //                       />
+          //                     )}
+          //                     {message && (
+          //                       <p className="message-text">{message}</p>
+          //                     )}
+          //                   </div>
+          //                 </div>
+          //               </div>
+          //             ) : (
+          //               <p className="text-muted text-center">
+          //                 Enter details to see a preview.
+          //               </p>
+          //             )}
+          //           </div>
+          //         </div>
+          //       </div>
+          //     </div>
+          //   </div>
+          // </div>
+          <div className="tab-pane active">
+            <BulkMessageUploader />
           </div>
         )}
       </div>

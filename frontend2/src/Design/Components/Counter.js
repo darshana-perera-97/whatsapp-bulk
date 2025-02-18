@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import config from "../config"; // Import the config file
 
 const Counter = () => {
   const [connected, setConnected] = useState(false);
@@ -7,7 +8,7 @@ const Counter = () => {
   useEffect(() => {
     const fetchCounter = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/counter");
+        const response = await fetch(`${config.BACKEND_URL}/api/counter`);
         if (response.ok) {
           const data = await response.json();
           setConnected(data.connected);
