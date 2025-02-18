@@ -9,7 +9,7 @@ const multer = require("multer"); // For file uploads
 const csvParser = require("csv-parser"); // For parsing CSV files
 
 const app = express();
-const PORT = 3001;
+const PORT = 5007;
 app.use(cors());
 
 let qrCodeData = null;
@@ -112,7 +112,6 @@ app.get("/api/counter", (req, res) => {
   }
 });
 
-// Multer setup for handling file uploads
 const upload = multer({
   dest: "uploads/", // Directory to save uploaded files
   limits: { fileSize: 5 * 1024 * 1024 }, // Limit to 5MB
@@ -121,7 +120,7 @@ const upload = multer({
 app.post("/api/bulkMessage", upload.single("file"), async (req, res) => {
   try {
     const { message } = req.body;
-    const file = req.file; // CSV file
+    const file = req.file; // Uploaded CSV file
 
     let image = null;
     if (req.body.image) {
@@ -134,50 +133,64 @@ app.post("/api/bulkMessage", upload.single("file"), async (req, res) => {
         .json({ error: "CSV file and either message or image are required" });
     }
 
-    // Process the uploaded CSV file
+    // Read and parse the uploaded CSV file
     const filePath = path.join(__dirname, file.path);
     console.log("CSV File saved at:", filePath);
-    console.log("img:", image);
 
-    // Array to hold all numbers from the CSV
-    const numbersArray = ["971461925@c.us"];
+    const numbersArray = [];
 
-    // Read and parse the CSV file
     fs.createReadStream(filePath)
-      .pipe(csv())
+      .pipe(csvParser())
       .on("data", (row) => {
-        console.log(row); // Log each row to check its structure
-        if (row.phoneNumber) {
-          const phoneNumber = parseInt(row.phoneNumber); // Parse as integer
-          console.log("Parsed phone number:", phoneNumber.phoneNumber);
-          numbersArray.push(phoneNumber.phoneNumber); // Add to array
+        // Dynamically find the column containing phone numbers
+        const phoneKey = Object.keys(row).find((key) =>
+          key.toLowerCase().includes("phone")
+        );
+
+        if (!phoneKey || !row[phoneKey]) {
+          console.error("Invalid CSV row, missing phone number:", row);
+          return;
         }
+
+        const phoneNumber = row[phoneKey].toString().trim();
+        if (phoneNumber) numbersArray.push(phoneNumber);
       })
-      .on("end", () => {
-        console.log("CSV file successfully processed.");
-        console.log("Extracted numbers:", numbersArray);
+      .on("end", async () => {
+        if (numbersArray.length === 0) {
+          return res
+            .status(400)
+            .json({ error: "No valid phone numbers found in CSV file" });
+        }
+
+        console.log("Extracted phone numbers:", numbersArray);
+
+        // Send messages via WhatsApp
+        for (const phone of numbersArray) {
+          const formattedNumber = `${phone}@c.us`;
+
+          try {
+            if (image) {
+              const media = new MessageMedia(
+                image.mimetype,
+                image.data,
+                image.filename
+              );
+              await client.sendMessage(formattedNumber, media, {
+                caption: message,
+              });
+            } else {
+              await client.sendMessage(formattedNumber, message);
+            }
+          } catch (err) {
+            console.error(`Failed to send message to ${phone}:`, err);
+          }
+        }
+
+        res.json({
+          message: "Bulk messages sent successfully!",
+          phoneNumbers: numbersArray,
+        });
       });
-
-    // Save the uploaded image (if provided)
-    let imagePath = null;
-    if (image && image.data && image.mimetype) {
-      const buffer = Buffer.from(image.data, "base64"); // Decode Base64 image
-
-      // Extract the file extension from the mimetype
-      const mimeType = image.mimetype; // e.g., "image/png"
-      const extension = mimeType.split("/")[1]; // Extract "png"
-      const imageName = `image_${Date.now()}.${extension}`;
-      imagePath = path.join(__dirname, "uploads", imageName);
-
-      // Write image to the uploads folder
-      fs.writeFileSync(imagePath, buffer);
-      console.log("Image saved at:", imagePath);
-    }
-
-    res.json({
-      message: "Bulk messages sent successfully!",
-      imagePath: imagePath ? `/uploads/${path.basename(imagePath)}` : null,
-    });
   } catch (err) {
     console.error("Error processing bulk message:", err);
     res
@@ -221,8 +234,6 @@ app.post("/api/sendSingleMsg", express.json(), async (req, res) => {
     res.status(500).json({ error: "Failed to send message or image" });
   }
 });
-
-
 
 // Start the server
 app.listen(PORT, () => {
